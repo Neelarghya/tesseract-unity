@@ -432,7 +432,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Tesseract version: 4.1.0'
+  m_Text: No Output
 --- !u!222 &824304682
 CanvasRenderer:
   m_ObjectHideFlags: 0
