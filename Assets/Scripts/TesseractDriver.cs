@@ -11,7 +11,7 @@ public class TesseractDriver
 
         try
         {
-            string version = "Tesseract version: "+ _tesseract.Version();
+            string version = "Tesseract version: " + _tesseract.Version();
             Debug.Log(version);
             return version;
         }
@@ -20,6 +20,18 @@ public class TesseractDriver
             string errorMessage = e.GetType() + " - " + e.Message;
             Debug.LogError(errorMessage);
             return errorMessage;
+        }
+    }
+
+    public void Setup()
+    {
+        _tesseract = new TesseractWrapper();
+
+        string datapath = Application.streamingAssetsPath + "/tessdata/";
+
+        if (_tesseract.Init("eng", datapath))
+        {
+            Debug.Log("Init Successful");
         }
     }
 }

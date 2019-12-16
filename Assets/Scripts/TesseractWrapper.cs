@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using UnityEngine;
 
 public class TesseractWrapper
 {
@@ -15,7 +16,13 @@ public class TesseractWrapper
 #endif
     [DllImport(TesseractDllName)]
     private static extern IntPtr TessVersion();
-    
+
+    [DllImport(TesseractDllName)]
+    private static extern IntPtr TessBaseAPICreate();
+
+    [DllImport(TesseractDllName)]
+    private static extern int TessBaseAPIInit3(IntPtr handle, string dataPath, string language);
+
     IntPtr tessHandle;
 
     public TesseractWrapper()
@@ -28,5 +35,26 @@ public class TesseractWrapper
         IntPtr strPtr = TessVersion();
         string tessVersion = Marshal.PtrToStringAnsi(strPtr);
         return tessVersion;
+    }
+
+    public bool Init(string lang, string dataPath)
+    {
+        try
+        {
+            tessHandle = TessBaseAPICreate();
+
+            int init = TessBaseAPIInit3(tessHandle, dataPath, lang);
+            if (init != 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+            return false;
+        }
     }
 }

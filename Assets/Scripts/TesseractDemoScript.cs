@@ -10,5 +10,6 @@ public class TesseractDemoScript : MonoBehaviour
     {
         _tesseractDriver = new TesseractDriver();
         display.text = _tesseractDriver.CheckTessVersion();
+        _tesseractDriver.Setup();
     }
 }
