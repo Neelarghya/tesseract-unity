@@ -15,4 +15,18 @@ public class TesseractWrapper
 #endif
     [DllImport(TesseractDllName)]
     private static extern IntPtr TessVersion();
+    
+    IntPtr tessHandle;
+
+    public TesseractWrapper()
+    {
+        tessHandle = IntPtr.Zero;
+    }
+
+    public string Version()
+    {
+        IntPtr strPtr = TessVersion();
+        string tessVersion = Marshal.PtrToStringAnsi(strPtr);
+        return tessVersion;
+    }
 }
