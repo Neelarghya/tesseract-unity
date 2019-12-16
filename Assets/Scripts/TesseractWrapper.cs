@@ -1,6 +1,5 @@
 using System;
 using System.Runtime.InteropServices;
-using UnityEngine;
 
 public class TesseractWrapper
 {
@@ -23,11 +22,18 @@ public class TesseractWrapper
     [DllImport(TesseractDllName)]
     private static extern int TessBaseAPIInit3(IntPtr handle, string dataPath, string language);
 
-    IntPtr tessHandle;
+    [DllImport(TesseractDllName)]
+    private static extern void TessBaseAPIDelete(IntPtr handle);
+
+    [DllImport(TesseractDllName)]
+    private static extern void TessBaseAPIEnd(IntPtr handle);
+
+    IntPtr _tessHandle;
+    private string _errorMsg;
 
     public TesseractWrapper()
     {
-        tessHandle = IntPtr.Zero;
+        _tessHandle = IntPtr.Zero;
     }
 
     public string Version()
@@ -37,24 +43,54 @@ public class TesseractWrapper
         return tessVersion;
     }
 
+    public string GetErrorMessage()
+    {
+        return _errorMsg;
+    }
+
     public bool Init(string lang, string dataPath)
     {
+        if (!_tessHandle.Equals(IntPtr.Zero))
+            Close();
+
         try
         {
-            tessHandle = TessBaseAPICreate();
-
-            int init = TessBaseAPIInit3(tessHandle, dataPath, lang);
-            if (init != 0)
+            _tessHandle = TessBaseAPICreate();
+            if (_tessHandle.Equals(IntPtr.Zero))
             {
+                _errorMsg = "TessAPICreate failed";
                 return false;
             }
 
-            return true;
+            if (string.IsNullOrWhiteSpace(dataPath))
+            {
+                _errorMsg = "Invalid DataPath";
+                return false;
+            }
+
+            int init = TessBaseAPIInit3(_tessHandle, dataPath, lang);
+            if (init != 0)
+            {
+                Close();
+                _errorMsg = "TessAPIInit failed. Output: " + init;
+                return false;
+            }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Debug.LogError(e);
+            _errorMsg = ex + " -- " + ex.Message;
             return false;
         }
+
+        return true;
+    }
+
+    public void Close()
+    {
+        if (_tessHandle.Equals(IntPtr.Zero))
+            return;
+        TessBaseAPIEnd(_tessHandle);
+        TessBaseAPIDelete(_tessHandle);
+        _tessHandle = IntPtr.Zero;
     }
 }

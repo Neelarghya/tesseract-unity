@@ -34,4 +34,9 @@ public class TesseractDriver
             Debug.Log("Init Successful");
         }
     }
+
+    public string GetErrorMessage()
+    {
+        return _tesseract?.GetErrorMessage();
+    }
 }
