@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using UnityEngine;
 
 public class TesseractWrapper
 {
@@ -13,6 +14,10 @@ public class TesseractWrapper
     private const string TesseractDllName = "tesseract";
     private const string LeptonicaDllName = "tesseract";
 #endif
+
+    private IntPtr _tessHandle;
+    private string _errorMsg;
+
     [DllImport(TesseractDllName)]
     private static extern IntPtr TessVersion();
 
@@ -26,10 +31,27 @@ public class TesseractWrapper
     private static extern void TessBaseAPIDelete(IntPtr handle);
 
     [DllImport(TesseractDllName)]
+    private static extern void TessBaseAPISetImage(IntPtr handle, IntPtr imagedata, int width, int height,
+        int bytes_per_pixel, int bytes_per_line);
+
+    [DllImport(TesseractDllName)]
+    private static extern void TessBaseAPISetImage2(IntPtr handle, IntPtr pix);
+    
+    [DllImport(TesseractDllName)]
+    private static extern int TessBaseAPIRecognize(IntPtr handle, IntPtr monitor);
+
+    [DllImport(TesseractDllName)]
+    private static extern IntPtr TessBaseAPIGetUTF8Text(IntPtr handle);
+
+    [DllImport(TesseractDllName)]
+    private static extern void TessDeleteText(IntPtr text);
+
+    [DllImport(TesseractDllName)]
     private static extern void TessBaseAPIEnd(IntPtr handle);
 
-    IntPtr _tessHandle;
-    private string _errorMsg;
+    [DllImport(TesseractDllName)]
+    private static extern void TessBaseAPIClear(IntPtr handle);
+
 
     public TesseractWrapper()
     {
