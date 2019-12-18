@@ -36,7 +36,7 @@ public class TesseractWrapper
 
     [DllImport(TesseractDllName)]
     private static extern void TessBaseAPISetImage2(IntPtr handle, IntPtr pix);
-    
+
     [DllImport(TesseractDllName)]
     private static extern int TessBaseAPIRecognize(IntPtr handle, IntPtr monitor);
 
@@ -105,6 +105,59 @@ public class TesseractWrapper
         }
 
         return true;
+    }
+
+    public string Recognize(Texture2D texture)
+    {
+        if (_tessHandle.Equals(IntPtr.Zero))
+            return null;
+
+        int width = texture.width;
+        int height = texture.height;
+        Color32[] colors = texture.GetPixels32();
+        int count = width * height;
+        int bytesPerPixel = 4;
+        byte[] dataBytes = new byte[count * bytesPerPixel];
+        int bytePtr = 0;
+
+        for (int y = height - 1; y >= 0; y--)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int colorIdx = y * width + x;
+                dataBytes[bytePtr++] = colors[colorIdx].r;
+                dataBytes[bytePtr++] = colors[colorIdx].g;
+                dataBytes[bytePtr++] = colors[colorIdx].b;
+                dataBytes[bytePtr++] = colors[colorIdx].a;
+            }
+        }
+
+        IntPtr imagePtr = Marshal.AllocHGlobal(count * bytesPerPixel);
+        Marshal.Copy(dataBytes, 0, imagePtr, count * bytesPerPixel);
+        
+        TessBaseAPISetImage(_tessHandle, imagePtr, width, height, bytesPerPixel, width * bytesPerPixel);
+        
+        if (TessBaseAPIRecognize(_tessHandle, IntPtr.Zero) != 0)
+        {
+            Marshal.FreeHGlobal(imagePtr);
+            return null;
+        }
+
+        IntPtr str_ptr = TessBaseAPIGetUTF8Text(_tessHandle);
+        Marshal.FreeHGlobal(imagePtr);
+        if (str_ptr.Equals(IntPtr.Zero))
+            return null;
+    #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        string recognizedText = Marshal.PtrToStringAnsi (str_ptr);
+    #else
+        string recognizedText = Marshal.PtrToStringAuto(str_ptr);
+    #endif
+
+        TessBaseAPIClear(_tessHandle);
+        TessDeleteText(str_ptr);
+
+
+        return recognizedText;
     }
 
     public void Close()
