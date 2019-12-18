@@ -39,4 +39,9 @@ public class TesseractDriver
     {
         return _tesseract?.GetErrorMessage();
     }
+
+    public string Recognize(Texture2D imageToRecognize)
+    {
+        return _tesseract.Recognize(imageToRecognize);
+    }
 }
