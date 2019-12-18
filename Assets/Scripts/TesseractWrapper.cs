@@ -52,6 +52,8 @@ public class TesseractWrapper
     [DllImport(TesseractDllName)]
     private static extern void TessBaseAPIClear(IntPtr handle);
 
+    [DllImport(TesseractDllName)]
+    private static extern IntPtr TessBaseAPIGetWords(IntPtr handle, IntPtr pixa);
 
     public TesseractWrapper()
     {
@@ -134,30 +136,73 @@ public class TesseractWrapper
 
         IntPtr imagePtr = Marshal.AllocHGlobal(count * bytesPerPixel);
         Marshal.Copy(dataBytes, 0, imagePtr, count * bytesPerPixel);
-        
+
         TessBaseAPISetImage(_tessHandle, imagePtr, width, height, bytesPerPixel, width * bytesPerPixel);
-        
+
         if (TessBaseAPIRecognize(_tessHandle, IntPtr.Zero) != 0)
         {
             Marshal.FreeHGlobal(imagePtr);
             return null;
         }
 
-        IntPtr str_ptr = TessBaseAPIGetUTF8Text(_tessHandle);
+        int pointerSize = Marshal.SizeOf(typeof(IntPtr));
+        IntPtr intPtr = TessBaseAPIGetWords(_tessHandle, IntPtr.Zero);
+        Boxa boxa = Marshal.PtrToStructure<Boxa>(intPtr);
+        Box[] boxes = new Box[boxa.n];
+
+        for (int index = 0; index < boxes.Length; index++)
+        {
+            IntPtr boxPtr = Marshal.ReadIntPtr(boxa.box, index * pointerSize);
+            boxes[index] = Marshal.PtrToStructure<Box>(boxPtr);
+            Box box = boxes[index];
+            DrawLines(texture,
+                new Rect(box.x, texture.height - box.y - box.h, box.w, box.h),
+                Color.green);
+        }
+
+        IntPtr stringPtr = TessBaseAPIGetUTF8Text(_tessHandle);
         Marshal.FreeHGlobal(imagePtr);
-        if (str_ptr.Equals(IntPtr.Zero))
+        if (stringPtr.Equals(IntPtr.Zero))
             return null;
-    #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
         string recognizedText = Marshal.PtrToStringAnsi (str_ptr);
-    #else
-        string recognizedText = Marshal.PtrToStringAuto(str_ptr);
-    #endif
+#else
+        string recognizedText = Marshal.PtrToStringAuto(stringPtr);
+#endif
 
         TessBaseAPIClear(_tessHandle);
-        TessDeleteText(str_ptr);
-
+        TessDeleteText(stringPtr);
 
         return recognizedText;
+    }
+
+    private void DrawLines(Texture2D texture, Rect boundingRect, Color color, int thickness = 3)
+    {
+        int x1 = (int) boundingRect.x;
+        int x2 = (int) (boundingRect.x + boundingRect.width);
+        int y1 = (int) boundingRect.y;
+        int y2 = (int) (boundingRect.y + boundingRect.height);
+
+        for (int x = x1; x <= x2; x++)
+        {
+            for (int i = 0; i < thickness; i++)
+            {
+                texture.SetPixel(x, y1 + i, color);
+                texture.SetPixel(x, y2 - i, color);
+            }
+        }
+
+        for (int y = y1; y <= y2; y++)
+        {
+            for (int i = 0; i < thickness; i++)
+            {
+                texture.SetPixel(x1 + i, y, color);
+                texture.SetPixel(x2 - i, y, color);
+            }
+        }
+
+        texture.Apply();
     }
 
     public void Close()
