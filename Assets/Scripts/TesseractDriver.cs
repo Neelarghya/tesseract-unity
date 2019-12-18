@@ -44,4 +44,9 @@ public class TesseractDriver
     {
         return _tesseract.Recognize(imageToRecognize);
     }
+
+    public Texture2D GetHighlightedTexture()
+    {
+        return _tesseract.GetHighlightedTexture();
+    }
 }

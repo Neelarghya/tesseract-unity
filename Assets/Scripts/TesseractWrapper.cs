@@ -16,6 +16,7 @@ public class TesseractWrapper
 #endif
 
     private IntPtr _tessHandle;
+    private Texture2D _highlightedTexture;
     private string _errorMsg;
 
     [DllImport(TesseractDllName)]
@@ -114,9 +115,11 @@ public class TesseractWrapper
         if (_tessHandle.Equals(IntPtr.Zero))
             return null;
 
-        int width = texture.width;
-        int height = texture.height;
-        Color32[] colors = texture.GetPixels32();
+        _highlightedTexture = texture;
+
+        int width = _highlightedTexture.width;
+        int height = _highlightedTexture.height;
+        Color32[] colors = _highlightedTexture.GetPixels32();
         int count = width * height;
         int bytesPerPixel = 4;
         byte[] dataBytes = new byte[count * bytesPerPixel];
@@ -155,8 +158,8 @@ public class TesseractWrapper
             IntPtr boxPtr = Marshal.ReadIntPtr(boxa.box, index * pointerSize);
             boxes[index] = Marshal.PtrToStructure<Box>(boxPtr);
             Box box = boxes[index];
-            DrawLines(texture,
-                new Rect(box.x, texture.height - box.y - box.h, box.w, box.h),
+            DrawLines(_highlightedTexture,
+                new Rect(box.x, _highlightedTexture.height - box.y - box.h, box.w, box.h),
                 Color.green);
         }
 
@@ -203,6 +206,11 @@ public class TesseractWrapper
         }
 
         texture.Apply();
+    }
+
+    public Texture2D GetHighlightedTexture()
+    {
+        return _highlightedTexture;
     }
 
     public void Close()
