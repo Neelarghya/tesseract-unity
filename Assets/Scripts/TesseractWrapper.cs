@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 
 public class TesseractWrapper
@@ -18,6 +20,7 @@ public class TesseractWrapper
     private IntPtr _tessHandle;
     private Texture2D _highlightedTexture;
     private string _errorMsg;
+    private const float MinimumConfidence = 60;
 
     [DllImport(TesseractDllName)]
     private static extern IntPtr TessVersion();
@@ -55,6 +58,9 @@ public class TesseractWrapper
 
     [DllImport(TesseractDllName)]
     private static extern IntPtr TessBaseAPIGetWords(IntPtr handle, IntPtr pixa);
+    
+    [DllImport(TesseractDllName)]
+    private static extern IntPtr TessBaseAPIAllWordConfidences(IntPtr handle);
 
     public TesseractWrapper()
     {
@@ -147,6 +153,20 @@ public class TesseractWrapper
             Marshal.FreeHGlobal(imagePtr);
             return null;
         }
+        
+        IntPtr confidencesPointer = TessBaseAPIAllWordConfidences(_tessHandle);
+        int i = 0;
+        List<int> confidence = new List<int>();
+        
+        while (true)
+        {
+            int tempConfidence = Marshal.ReadInt32(confidencesPointer, i * 4);
+
+            if (tempConfidence == -1) break;
+
+            i++;
+            confidence.Add(tempConfidence);
+        }
 
         int pointerSize = Marshal.SizeOf(typeof(IntPtr));
         IntPtr intPtr = TessBaseAPIGetWords(_tessHandle, IntPtr.Zero);
@@ -155,12 +175,15 @@ public class TesseractWrapper
 
         for (int index = 0; index < boxes.Length; index++)
         {
-            IntPtr boxPtr = Marshal.ReadIntPtr(boxa.box, index * pointerSize);
-            boxes[index] = Marshal.PtrToStructure<Box>(boxPtr);
-            Box box = boxes[index];
-            DrawLines(_highlightedTexture,
-                new Rect(box.x, _highlightedTexture.height - box.y - box.h, box.w, box.h),
-                Color.green);
+            if (confidence[index] >= MinimumConfidence)
+            {
+                IntPtr boxPtr = Marshal.ReadIntPtr(boxa.box, index * pointerSize);
+                boxes[index] = Marshal.PtrToStructure<Box>(boxPtr);
+                Box box = boxes[index];
+                DrawLines(_highlightedTexture,
+                    new Rect(box.x, _highlightedTexture.height - box.y - box.h, box.w, box.h),
+                    Color.green);
+            }
         }
 
         IntPtr stringPtr = TessBaseAPIGetUTF8Text(_tessHandle);
@@ -176,8 +199,21 @@ public class TesseractWrapper
 
         TessBaseAPIClear(_tessHandle);
         TessDeleteText(stringPtr);
+        
+        string[] words = recognizedText.Split(new[] {' ', '\n'}, StringSplitOptions.RemoveEmptyEntries);
+        StringBuilder result = new StringBuilder();
 
-        return recognizedText;
+        for (i = 0; i < boxes.Length; i++)
+        {
+            Debug.Log(words[i] + " -> " + confidence[i]);
+            if (confidence[i] >= MinimumConfidence)
+            {
+                result.Append(words[i]);
+                result.Append(" ");
+            }
+        }
+
+        return result.ToString();
     }
 
     private void DrawLines(Texture2D texture, Rect boundingRect, Color color, int thickness = 3)

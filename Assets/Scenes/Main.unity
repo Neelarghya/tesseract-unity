@@ -502,7 +502,7 @@ MonoBehaviour:
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
-    m_HorizontalOverflow: 1
+    m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: No Output
@@ -543,7 +543,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47559921ab961442f922dd13c59743f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  imageToRecognize: {fileID: 2800000, guid: 9ba886a813f3c44cc841c1263b857478, type: 3}
+  imageToRecognize: {fileID: 2800000, guid: dad119c41ce7643a68a884f2ee43aa52, type: 3}
   displayText: {fileID: 824304681}
   outputImage: {fileID: 446900763}
 --- !u!4 &865564358
