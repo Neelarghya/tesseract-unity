@@ -8,6 +8,7 @@ public class TesseractDemoScript : MonoBehaviour
     [SerializeField] private RawImage outputImage;
     private TesseractDriver _tesseractDriver;
     private string _text = "";
+    private Texture2D _texture;
 
     private void Start()
     {
@@ -17,16 +18,21 @@ public class TesseractDemoScript : MonoBehaviour
 
         _tesseractDriver = new TesseractDriver();
         Recoginze(texture);
-        SetImageDisplay();
     }
 
     private void Recoginze(Texture2D outputTexture)
     {
+        _texture = outputTexture;
         ClearTextDisplay();
         AddToTextDisplay(_tesseractDriver.CheckTessVersion());
-        _tesseractDriver.Setup();
-        AddToTextDisplay(_tesseractDriver.Recognize(outputTexture));
+        _tesseractDriver.Setup(OnSetupCompleteRecognize);
+    }
+
+    private void OnSetupCompleteRecognize()
+    {
+        AddToTextDisplay(_tesseractDriver.Recognize(_texture));
         AddToTextDisplay(_tesseractDriver.GetErrorMessage(), true);
+        SetImageDisplay();
     }
 
     private void ClearTextDisplay()
