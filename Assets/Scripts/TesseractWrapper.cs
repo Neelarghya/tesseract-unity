@@ -192,7 +192,7 @@ public class TesseractWrapper
             return null;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
-        string recognizedText = Marshal.PtrToStringAnsi (str_ptr);
+        string recognizedText = Marshal.PtrToStringAnsi (stringPtr);
 #else
         string recognizedText = Marshal.PtrToStringAuto(stringPtr);
 #endif
